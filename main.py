@@ -5,6 +5,7 @@ from PyQt6.QtGui import QPixmap
 from PyQt6.QtCore import Qt
 
 
+
 class MapApp(QMainWindow):
     def __init__(self):
         super().__init__()
@@ -44,6 +45,21 @@ class MapApp(QMainWindow):
             self.update_map()
         elif event.key() == Qt.Key.Key_PageDown and self.zoom > 0:
             self.zoom -= 1
+            self.update_map()
+
+        step = 360 / (2 ** self.zoom) * 0.1
+
+        if event.key() == Qt.Key.Key_Up:
+            self.lat = min(85, self.lat + step)
+            self.update_map()
+        elif event.key() == Qt.Key.Key_Down:
+            self.lat = max(-85, self.lat - step)
+            self.update_map()
+        elif event.key() == Qt.Key.Key_Right:
+            self.lon = min(180, self.lon + step)
+            self.update_map()
+        elif event.key() == Qt.Key.Key_Left:
+            self.lon = max(-180, self.lon - step)
             self.update_map()
 
 
