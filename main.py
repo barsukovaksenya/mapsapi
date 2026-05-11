@@ -50,8 +50,9 @@ class MapApp(QMainWindow):
         self.reset_button.clicked.connect(self.reset_search)
 
         self.address_label = QLabel(self)
-        self.address_label.setGeometry(270, 460, 320, 30)
+        self.address_label.setGeometry(270, 455, 320, 40)
         self.address_label.setStyleSheet("color: #d63384; font-size: 12px;")
+        self.address_label.setWordWrap(True)
 
         self.search_input.setGeometry(10, 530, 400, 30)
         self.search_button.setGeometry(420, 530, 80, 30)
