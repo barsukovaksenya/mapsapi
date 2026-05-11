@@ -10,7 +10,7 @@ class MapApp(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Карта")
-        self.setFixedSize(600, 540)
+        self.setFixedSize(600, 570)
         self.setStyleSheet("background-color: #ffe0ec;")
 
         self.lon = 37.620070
@@ -46,6 +46,13 @@ class MapApp(QMainWindow):
         self.reset_button.setStyleSheet("background: #d63384; color: white; border: none; border-radius: 5px; font-size: 14px;")
         self.reset_button.setFocusPolicy(Qt.FocusPolicy.NoFocus)
         self.reset_button.clicked.connect(self.reset_search)
+
+        self.address_label = QLabel(self)
+        self.address_label.setGeometry(270, 460, 320, 30)
+        self.address_label.setStyleSheet("color: #d63384; font-size: 12px;")
+
+        self.search_input.setGeometry(10, 500, 400, 30)
+        self.search_button.setGeometry(420, 500, 80, 30)
 
         self.update_map()
 
@@ -89,12 +96,14 @@ class MapApp(QMainWindow):
         coords = toponym["Point"]["pos"]
         self.lon, self.lat = [float(x) for x in coords.split(" ")]
         self.marker = f"{self.lon},{self.lat}"
+        self.address_label.setText(toponym["metaDataProperty"]["GeocoderMetaData"]["text"])
         self.search_input.clearFocus()
         self.update_map()
 
     def reset_search(self):
         self.marker = None
         self.search_input.clear()
+        self.address_label.clear()
         self.update_map()
 
     def change_theme(self):
