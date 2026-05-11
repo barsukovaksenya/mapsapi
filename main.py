@@ -41,6 +41,12 @@ class MapApp(QMainWindow):
         self.search_button.setFocusPolicy(Qt.FocusPolicy.NoFocus)
         self.search_button.clicked.connect(self.search)
 
+        self.reset_button = QPushButton("Сброс", self)
+        self.reset_button.setGeometry(170, 460, 90, 30)
+        self.reset_button.setStyleSheet("background: #d63384; color: white; border: none; border-radius: 5px; font-size: 14px;")
+        self.reset_button.setFocusPolicy(Qt.FocusPolicy.NoFocus)
+        self.reset_button.clicked.connect(self.reset_search)
+
         self.update_map()
 
     def update_map(self):
@@ -82,9 +88,13 @@ class MapApp(QMainWindow):
         toponym = members[0]["GeoObject"]
         coords = toponym["Point"]["pos"]
         self.lon, self.lat = [float(x) for x in coords.split(" ")]
-
         self.marker = f"{self.lon},{self.lat}"
         self.search_input.clearFocus()
+        self.update_map()
+
+    def reset_search(self):
+        self.marker = None
+        self.search_input.clear()
         self.update_map()
 
     def change_theme(self):
