@@ -134,6 +134,39 @@ class MapApp(QMainWindow):
             self.theme = "light"
         self.update_map()
 
+    def mousePressEvent(self, event):
+        if event.button() == Qt.MouseButton.LeftButton:
+            x = event.pos().x()
+            y = event.pos().y()
+            if x < 0 or x >= 600 or y < 0 or y >= 450:
+                return
+            dx = (x - 300) * 360 / (256 * (2 ** self.zoom))
+            dy = -(y - 225) * 180 / (256 * (2 ** self.zoom))
+            click_lon = self.lon + dx
+            click_lat = self.lat + dy
+            params = {
+                "apikey": "8013b162-6b42-4997-9691-77b7074026e0",
+                "geocode": f"{click_lon},{click_lat}",
+                "format": "json",
+            }
+            response = requests.get("http://geocode-maps.yandex.ru/1.x/", params=params)
+            if not response:
+                return
+            json_response = response.json()
+            members = json_response["response"]["GeoObjectCollection"]["featureMember"]
+            if not members:
+                return
+            toponym = members[0]["GeoObject"]
+            coords = toponym["Point"]["pos"]
+            t_lon, t_lat = coords.split(" ")
+            self.marker = f"{t_lon},{t_lat}"
+            self.current_address = toponym["metaDataProperty"]["GeocoderMetaData"]["text"]
+            self.current_postal = toponym["metaDataProperty"]["GeocoderMetaData"]["Address"].get("postal_code", "")
+            self.update_address()
+            self.search_input.clearFocus()
+            self.setFocus()
+            self.update_map()
+
     def keyPressEvent(self, event):
         if self.search_input.hasFocus():
             return
