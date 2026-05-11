@@ -10,7 +10,7 @@ class MapApp(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Карта")
-        self.setFixedSize(600, 570)
+        self.setFixedSize(600, 600)
         self.setStyleSheet("background-color: #ffe0ec;")
 
         self.lon = 37.620070
@@ -18,6 +18,8 @@ class MapApp(QMainWindow):
         self.zoom = 10
         self.theme = "light"
         self.marker = None
+        self.current_address = ""
+        self.current_postal = ""
 
         self.map_label = QLabel(self)
         self.map_label.setGeometry(0, 0, 600, 450)
@@ -51,8 +53,14 @@ class MapApp(QMainWindow):
         self.address_label.setGeometry(270, 460, 320, 30)
         self.address_label.setStyleSheet("color: #d63384; font-size: 12px;")
 
-        self.search_input.setGeometry(10, 500, 400, 30)
-        self.search_button.setGeometry(420, 500, 80, 30)
+        self.search_input.setGeometry(10, 530, 400, 30)
+        self.search_button.setGeometry(420, 530, 80, 30)
+
+        self.postal_checkbox = QCheckBox("Почтовый индекс", self)
+        self.postal_checkbox.setGeometry(10, 500, 200, 30)
+        self.postal_checkbox.setStyleSheet("color: #d63384; font-size: 14px;")
+        self.postal_checkbox.setFocusPolicy(Qt.FocusPolicy.NoFocus)
+        self.postal_checkbox.stateChanged.connect(self.update_address)
 
         self.update_map()
 
@@ -96,15 +104,27 @@ class MapApp(QMainWindow):
         coords = toponym["Point"]["pos"]
         self.lon, self.lat = [float(x) for x in coords.split(" ")]
         self.marker = f"{self.lon},{self.lat}"
-        self.address_label.setText(toponym["metaDataProperty"]["GeocoderMetaData"]["text"])
+        self.current_address = toponym["metaDataProperty"]["GeocoderMetaData"]["text"]
+        postal = toponym["metaDataProperty"]["GeocoderMetaData"]["Address"].get("postal_code", "")
+        self.current_postal = postal
+        self.update_address()
         self.search_input.clearFocus()
         self.update_map()
 
     def reset_search(self):
         self.marker = None
+        self.current_address = ""
+        self.current_postal = ""
         self.search_input.clear()
         self.address_label.clear()
         self.update_map()
+
+    def update_address(self):
+        if self.current_address:
+            text = self.current_address
+            if self.postal_checkbox.isChecked() and self.current_postal:
+                text += ", " + self.current_postal
+            self.address_label.setText(text)
 
     def change_theme(self):
         if self.theme_checkbox.isChecked():
