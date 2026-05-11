@@ -82,6 +82,7 @@ class MapApp(QMainWindow):
         toponym = members[0]["GeoObject"]
         coords = toponym["Point"]["pos"]
         self.lon, self.lat = [float(x) for x in coords.split(" ")]
+
         self.marker = f"{self.lon},{self.lat}"
         self.search_input.clearFocus()
         self.update_map()
