@@ -1,9 +1,9 @@
 import sys
+import math
 import requests
 from PyQt6.QtWidgets import QApplication, QMainWindow, QLabel, QCheckBox, QLineEdit, QPushButton
 from PyQt6.QtGui import QPixmap
 from PyQt6.QtCore import Qt
-
 
 
 class MapApp(QMainWindow):
@@ -64,6 +64,7 @@ class MapApp(QMainWindow):
         self.postal_checkbox.stateChanged.connect(self.update_address)
 
         self.update_map()
+        self.setFocus()
 
     def update_map(self):
         params = {
@@ -99,6 +100,7 @@ class MapApp(QMainWindow):
             return
         json_response = response.json()
         members = json_response["response"]["GeoObjectCollection"]["featureMember"]
+        print(members)
         if not members:
             return
         toponym = members[0]["GeoObject"]
@@ -162,6 +164,74 @@ class MapApp(QMainWindow):
             self.marker = f"{t_lon},{t_lat}"
             self.current_address = toponym["metaDataProperty"]["GeocoderMetaData"]["text"]
             self.current_postal = toponym["metaDataProperty"]["GeocoderMetaData"]["Address"].get("postal_code", "")
+            self.update_address()
+            self.search_input.clearFocus()
+            self.setFocus()
+            self.update_map()
+
+        elif event.button() == Qt.MouseButton.RightButton:
+            x = event.pos().x()
+            y = event.pos().y()
+            if x < 0 or x >= 600 or y < 0 or y >= 450:
+                return
+            dx = (x - 300) * 360 / (256 * (2 ** self.zoom))
+            dy = -(y - 225) * 180 / (256 * (2 ** self.zoom))
+            click_lon = self.lon + dx
+            click_lat = self.lat + dy
+
+            params = {
+                "apikey": "8013b162-6b42-4997-9691-77b7074026e0",
+                "geocode": f"{click_lon},{click_lat}",
+                "format": "json",
+            }
+            response = requests.get("http://geocode-maps.yandex.ru/1.x/", params=params)
+            if not response:
+                return
+            json_response = response.json()
+            members = json_response["response"]["GeoObjectCollection"]["featureMember"]
+            if not members:
+                return
+            toponym = members[0]["GeoObject"]
+            coords = toponym["Point"]["pos"]
+            t_lon, t_lat = coords.split(" ")
+            self.marker = f"{t_lon},{t_lat}"
+            self.current_address = toponym["metaDataProperty"]["GeocoderMetaData"]["text"]
+
+            params = {
+                "apikey": "dda3ddba-c9ea-4ead-9010-f43fbc15c6e3",
+                "text": self.current_address,
+                "lang": "ru_RU",
+                "type": "biz",
+                "results": "50",
+            }
+            response = requests.get("https://search-maps.yandex.ru/v1/", params=params)
+            print("Status:", response.status_code)
+            if response.status_code != 200:
+                print("Error:", response.text)
+                return
+            json_response = response.json()
+            print("Found:", len(json_response["features"]))
+            if not json_response["features"]:
+                return
+            best_org = None
+            best_dist = float("inf")
+            for org in json_response["features"]:
+                org_coords = org["geometry"]["coordinates"]
+                org_lon, org_lat = org_coords[0], org_coords[1]
+                d_lon = (click_lon - org_lon) * math.cos(math.radians(click_lat)) * 111321
+                d_lat = (click_lat - org_lat) * 111321
+                dist = math.sqrt(d_lon ** 2 + d_lat ** 2)
+                print("  ", org["properties"]["CompanyMetaData"]["name"], "dist:", round(dist))
+                if dist < best_dist:
+                    best_dist = dist
+                    best_org = org
+            print("Best dist:", round(best_dist))
+            if best_dist > 50 or not best_org:
+                return
+            org_coords = best_org["geometry"]["coordinates"]
+            self.marker = f"{org_coords[0]},{org_coords[1]}"
+            self.current_address = best_org["properties"]["CompanyMetaData"]["name"]
+            self.current_postal = ""
             self.update_address()
             self.search_input.clearFocus()
             self.setFocus()
