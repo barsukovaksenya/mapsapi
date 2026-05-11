@@ -38,6 +38,14 @@ class MapApp(QMainWindow):
         else:
             self.map_label.setText(f"Ошибка: {response.status_code}")
 
+    def keyPressEvent(self, event):
+        if event.key() == Qt.Key.Key_PageUp and self.zoom < 17:
+            self.zoom += 1
+            self.update_map()
+        elif event.key() == Qt.Key.Key_PageDown and self.zoom > 0:
+            self.zoom -= 1
+            self.update_map()
+
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
